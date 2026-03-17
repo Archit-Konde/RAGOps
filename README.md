@@ -1,3 +1,13 @@
+---
+title: RAGOps
+emoji: 🔍
+colorFrom: blue
+colorTo: purple
+sdk: docker
+app_port: 7860
+pinned: false
+---
+
 # RAGOps API
 
 > Production-style Retrieval-Augmented Generation service built with FastAPI, PostgreSQL + pgvector, and sentence-transformers. Upgrades the [from-scratch RAG pipeline](https://github.com/Archit-Konde/RAG) to a containerised, testable API with CI regression gating.
