@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAGOps API</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>RAGOps API</h1>
+            <p class="subtitle">Production-style Retrieval-Augmented Generation service</p>
+            <span class="badge">v{{ version }}</span>
+        </header>
+
+        <section class="hero">
+            <p>
+                A containerised RAG pipeline built with <strong>FastAPI</strong>,
+                <strong>PostgreSQL + pgvector</strong>, and <strong>sentence-transformers</strong>.
+                Upgrades the <a href="https://github.com/Archit-Konde/RAG">from-scratch RAG pipeline</a>
+                into a testable, deployable API with CI regression gating.
+            </p>
+        </section>
+
+        <section class="links">
+            <a href="/docs" class="btn">Interactive API Docs</a>
+            <a href="/health" class="btn btn-outline">Health Check</a>
+            <a href="https://github.com/Archit-Konde/RAGOps" class="btn btn-outline">GitHub</a>
+        </section>
+
+        <section class="architecture">
+            <h2>Architecture</h2>
+            <div class="arch-diagram">
+                <div class="arch-col">
+                    <div class="arch-box client">Client</div>
+                </div>
+                <div class="arch-arrow">&rarr;</div>
+                <div class="arch-col">
+                    <div class="arch-label">FastAPI</div>
+                    <div class="arch-box endpoint">/health</div>
+                    <div class="arch-box endpoint">/v1/ingest</div>
+                    <div class="arch-box endpoint">/v1/query</div>
+                </div>
+                <div class="arch-arrow">&rarr;</div>
+                <div class="arch-col">
+                    <div class="arch-label">Services</div>
+                    <div class="arch-box service">ingest_service</div>
+                    <div class="arch-box service">rag_service</div>
+                </div>
+                <div class="arch-arrow">&rarr;</div>
+                <div class="arch-col">
+                    <div class="arch-label">Core</div>
+                    <div class="arch-box core">chunking</div>
+                    <div class="arch-box core">embedding</div>
+                    <div class="arch-box core">rerank</div>
+                </div>
+                <div class="arch-arrow">&rarr;</div>
+                <div class="arch-col">
+                    <div class="arch-box db">PostgreSQL<br>+ pgvector</div>
+                    <div class="arch-box llm">OpenAI LLM</div>
+                </div>
+            </div>
+        </section>
+
+        <section class="stack">
+            <h2>Tech Stack</h2>
+            <div class="stack-grid">
+                <div class="stack-item">
+                    <strong>API</strong>
+                    <span>FastAPI + Uvicorn</span>
+                </div>
+                <div class="stack-item">
+                    <strong>Vector Store</strong>
+                    <span>PostgreSQL 15 + pgvector</span>
+                </div>
+                <div class="stack-item">
+                    <strong>Embeddings</strong>
+                    <span>all-MiniLM-L6-v2 (384d)</span>
+                </div>
+                <div class="stack-item">
+                    <strong>Reranker</strong>
+                    <span>ms-marco-MiniLM-L-6-v2</span>
+                </div>
+                <div class="stack-item">
+                    <strong>LLM</strong>
+                    <span>OpenAI-compatible API</span>
+                </div>
+                <div class="stack-item">
+                    <strong>Search</strong>
+                    <span>HNSW cosine + RRF</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="endpoints">
+            <h2>API Endpoints</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Method</th>
+                        <th>Path</th>
+                        <th>Description</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><span class="method get">GET</span></td>
+                        <td><code>/health</code></td>
+                        <td>Liveness probe</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td><code>/v1/ingest</code></td>
+                        <td>Upload & ingest a document (PDF, TXT, MD)</td>
+                    </tr>
+                    <tr>
+                        <td><span class="method post">POST</span></td>
+                        <td><code>/v1/query</code></td>
+                        <td>Query the RAG pipeline</td>
+                    </tr>
+                </tbody>
+            </table>
+        </section>
+
+        <section class="quickstart">
+            <h2>Quickstart</h2>
+            <pre><code>git clone https://github.com/Archit-Konde/RAGOps.git
+cd RAGOps
+cp .env.example .env          # add your OPENAI_API_KEY
+make up                        # starts PostgreSQL + API
+make migrate                   # creates tables + HNSW index
+
+# Ingest a document
+curl -F "file=@doc.txt" http://localhost:8000/v1/ingest
+
+# Query
+curl -X POST http://localhost:8000/v1/query \
+  -H "Content-Type: application/json" \
+  -d '{"query": "your question here"}'</code></pre>
+        </section>
+
+        <footer>
+            <p>Built by <a href="https://github.com/Archit-Konde">Archit Konde</a></p>
+        </footer>
+    </div>
+</body>
+</html>

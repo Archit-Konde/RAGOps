@@ -6,7 +6,9 @@ session generator for dependency injection.
 """
 from __future__ import annotations
 
+import ssl as _ssl
 from collections.abc import AsyncGenerator
+from urllib.parse import parse_qs, urlencode, urlparse, urlunparse
 
 from sqlalchemy.ext.asyncio import (
     AsyncEngine,
@@ -23,10 +25,33 @@ async def init_db(database_url: str) -> None:
     """Create the async engine and session factory."""
     global _engine, _session_factory
 
-    # Ensure we use the asyncpg driver
-    url = database_url.replace("postgresql://", "postgresql+asyncpg://")
+    parsed = urlparse(database_url)
 
-    _engine = create_async_engine(url, echo=False, pool_size=10, max_overflow=20)
+    # Detect if SSL is required (Neon, Supabase, etc.)
+    query_params = parse_qs(parsed.query)
+    needs_ssl = "sslmode" in query_params or ".neon.tech" in (parsed.hostname or "")
+
+    # Remove sslmode from query — asyncpg uses connect_args instead
+    query_params.pop("sslmode", None)
+    clean_query = urlencode(query_params, doseq=True)
+
+    # Rebuild URL with asyncpg driver
+    url = urlunparse((
+        "postgresql+asyncpg",
+        parsed.netloc,
+        parsed.path,
+        parsed.params,
+        clean_query,
+        parsed.fragment,
+    ))
+
+    connect_args: dict = {}
+    if needs_ssl:
+        connect_args["ssl"] = _ssl.create_default_context()
+
+    _engine = create_async_engine(
+        url, echo=False, pool_size=5, max_overflow=10, connect_args=connect_args,
+    )
     _session_factory = async_sessionmaker(
         bind=_engine, class_=AsyncSession, expire_on_commit=False
     )
