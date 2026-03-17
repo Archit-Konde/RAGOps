@@ -30,7 +30,11 @@ async def _run_migrations() -> None:
     migration_file = _MIGRATIONS_DIR / "001_init.sql"
     if not migration_file.exists():
         return
-    sql = migration_file.read_text()
+    raw_sql = migration_file.read_text()
+    # Strip SQL comments (-- ...) before splitting, since comments
+    # may contain semicolons that break naive splitting.
+    import re
+    sql = re.sub(r"--[^\n]*", "", raw_sql)
     # asyncpg does not support multiple statements in one execute(),
     # so split on semicolons and run each statement individually.
     statements = [s.strip() for s in sql.split(";") if s.strip()]
