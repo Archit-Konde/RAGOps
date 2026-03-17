@@ -14,7 +14,8 @@ from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from apps.api.app import VERSION
-from apps.api.app.db.session import _engine, close_db, init_db
+from apps.api.app.db import session as db_session
+from apps.api.app.db.session import close_db, init_db
 from apps.api.app.routers import health, ingest, landing, query
 from apps.api.app.services.rag_service import close_http_client
 from apps.api.app.settings import get_settings
@@ -30,7 +31,7 @@ async def _run_migrations() -> None:
     if not migration_file.exists():
         return
     sql = migration_file.read_text()
-    async with _engine.begin() as conn:
+    async with db_session._engine.begin() as conn:
         await conn.execute(text(sql))
     logger.info("Database migrations applied successfully")
 
