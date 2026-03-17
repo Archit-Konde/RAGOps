@@ -1,158 +1,1196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>RAGOps API</title>
-    <link rel="stylesheet" href="/static/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="RAGOps — production-style RAG service built with FastAPI, PostgreSQL + pgvector, and sentence-transformers. Live demo with full pipeline: ingest, embed, search, rerank, generate." />
+  <meta name="author" content="Archit Konde" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#1e1e1e" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://architechs-ragops.hf.space/" />
+  <meta property="og:title" content="RAGOps — Archit Konde" />
+  <meta property="og:description" content="Production RAG API with FastAPI, pgvector, cross-encoder reranking, and grounded generation. Fully functional live demo." />
+  <meta property="og:locale" content="en_CA" />
+  <meta name="twitter:card" content="summary" />
+  <meta name="twitter:creator" content="@architkonde" />
+  <meta name="twitter:title" content="RAGOps — Archit Konde" />
+  <meta name="twitter:description" content="Production RAG API. FastAPI + pgvector + sentence-transformers. Live demo." />
+  <link rel="canonical" href="https://architechs-ragops.hf.space/" />
+  <title>RAGOps — Archit Konde</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%231e1e1e'/><text x='5' y='25' font-family='monospace' font-size='22' font-weight='bold' fill='%23C9A84C'>%3E</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg: #1e1e1e;
+      --surface: #252526;
+      --border: #3e3e42;
+      --text: #d4d4d4;
+      --muted: #858585;
+      --accent: #C9A84C;
+      --green: #28c840;
+      --font: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', 'Courier New', monospace;
+      --s1: 0.4rem;
+      --s2: 0.8rem;
+      --s3: 1.6rem;
+      --s4: 3.2rem;
+      --s5: 6.4rem;
+      --nav-h: 60px;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html { font-size: 16px; scroll-behavior: smooth; }
+    body { font-family: var(--font); background: var(--bg); color: var(--text); -webkit-font-smoothing: antialiased; min-height: 100vh; }
+    ::selection { background: var(--accent); color: var(--bg); }
+    a { color: inherit; text-decoration: none; }
+
+    /* ── Boot Overlay ── */
+    .boot-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.6s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .boot-overlay.done { transform: translateY(-100%); opacity: 0; pointer-events: none; }
+
+    .boot-term {
+      width: 100%;
+      max-width: 580px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--surface);
+      margin: 0 1.6rem;
+    }
+
+    .boot-body { padding: 1.6rem 2rem; font-size: 0.82rem; line-height: 1.8; min-height: 260px; }
+    .boot-line { opacity: 0; animation: boot-fade-in 0.15s ease forwards; }
+    .boot-ok { color: var(--green); font-weight: 600; }
+    .boot-accent { color: var(--accent); font-weight: 600; }
+    .boot-muted { color: var(--muted); }
+
+    @keyframes boot-fade-in {
+      from { opacity: 0; transform: translateY(4px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .boot-overlay { display: none; }
+    }
+
+    /* ── Navbar ── */
+    #navbar {
+      position: fixed;
+      top: 0; left: 0; right: 0;
+      height: var(--nav-h);
+      background: rgba(30, 30, 30, 0.92);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 var(--s3);
+      z-index: 100;
+    }
+
+    .nav-brand { font-size: 0.82rem; font-weight: 600; color: var(--text); text-decoration: none; white-space: nowrap; }
+    .nav-brand .accent { color: var(--accent); }
+
+    .nav-links {
+      display: flex;
+      list-style: none;
+      gap: var(--s3);
+      align-items: center;
+    }
+
+    .nav-links a {
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.2s ease;
+      white-space: nowrap;
+    }
+    .nav-links a:hover { color: var(--accent); }
+
+    .nav-slash { color: var(--accent); }
+
+    .nav-kbd {
+      font-family: var(--font);
+      font-size: 0.66rem;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 2px 7px;
+      border-radius: 3px;
+      cursor: pointer;
+      transition: border-color 0.2s, color 0.2s;
+      line-height: 1;
+    }
+    .nav-kbd:hover { border-color: var(--accent); color: var(--accent); }
+
+    /* ── Back to Top ── */
+    .back-to-top {
+      position: fixed; bottom: 2rem; right: 2rem; z-index: 500;
+      width: 36px; height: 36px; background: var(--surface);
+      border: 1px solid var(--border); color: var(--accent);
+      font-family: var(--font); font-size: 1rem; cursor: pointer;
+      border-radius: 4px; display: flex; align-items: center;
+      justify-content: center; text-decoration: none;
+      opacity: 0; visibility: hidden; transform: translateY(8px);
+      transition: opacity 0.2s, visibility 0.2s, background 0.2s, color 0.2s, border-color 0.2s, transform 0.2s;
+    }
+    .back-to-top.visible { opacity: 1; visibility: visible; transform: translateY(0); }
+    .back-to-top:hover { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+
+    /* ── Toast ── */
+    .cmd-toast {
+      position: fixed; bottom: 1.5rem; left: 1.5rem; z-index: 490;
+      background: var(--surface); border: 1px solid var(--border);
+      color: var(--muted); font-size: 0.68rem; padding: 0.35rem 0.75rem;
+      border-radius: 4px; opacity: 0; transform: translateY(6px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      pointer-events: none; white-space: nowrap;
+    }
+    .cmd-toast.visible { opacity: 1; transform: translateY(0); }
+    .cmd-toast kbd {
+      font-family: var(--font); background: var(--bg);
+      border: 1px solid var(--border); padding: 1px 4px;
+      border-radius: 2px; font-size: 0.62rem; margin: 0 2px;
+    }
+
+    /* ── Page Layout ── */
+    .page {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: calc(var(--nav-h) + 3rem) 1.6rem 4rem;
+    }
+
+    /* ── Terminal Window ── */
+    .term {
+      width: 100%;
+      max-width: 680px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--surface);
+      margin-bottom: 2.4rem;
+    }
+
+    .term-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.6rem 1.2rem;
+      background: rgba(62, 62, 66, 0.25);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dots { display: flex; gap: 6px; }
+    .dot { width: 12px; height: 12px; border-radius: 50%; }
+    .d-r { background: #ff5f57; }
+    .d-y { background: #febc2e; }
+    .d-g { background: #28c840; }
+
+    .bar-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin: 0 auto;
+      padding-right: 46px;
+    }
+
+    .term-body {
+      padding: 1.6rem 2rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      line-height: 1.6;
+    }
+
+    .t-line { font-size: 0.82rem; }
+    .t-prompt { color: var(--accent); font-weight: 600; }
+    .t-cmd { color: var(--text); }
+    .t-out { color: var(--muted); font-size: 0.82rem; padding-left: 0.4rem; }
+
+    .proj-title {
+      font-size: clamp(1.3rem, 4vw, 1.9rem);
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: -0.03em;
+      line-height: 1.2;
+      padding-left: 0.4rem;
+      margin: 0.6rem 0 0.3rem;
+    }
+
+    .proj-sub {
+      font-size: 0.82rem;
+      color: var(--muted);
+      padding-left: 0.4rem;
+      margin-bottom: 1rem;
+    }
+
+    .tech-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.4rem;
+      padding-left: 0.4rem;
+      margin: 0.4rem 0 0.6rem;
+    }
+
+    .tag {
+      background: rgba(37, 37, 38, 0.8);
+      border: 1px solid var(--border);
+      color: var(--text);
+      font-size: 0.72rem;
+      padding: 2px 9px;
+      border-radius: 2px;
+      font-family: var(--font);
+      transition: border-color 0.2s ease, color 0.2s ease;
+    }
+
+    .cursor {
+      color: var(--text);
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* ── CTA ── */
+    .cta {
+      width: 100%;
+      max-width: 680px;
+      display: flex;
+      gap: 0.8rem;
+      margin-bottom: 2rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 0.55rem 1.2rem;
+      font-family: var(--font);
+      font-size: 0.80rem;
+      text-decoration: none;
+      border-radius: 2px;
+      transition: background 0.2s ease, color 0.2s ease, border-color 0.2s ease;
+      white-space: nowrap;
+    }
+
+    .btn-primary {
+      background: var(--accent);
+      color: var(--bg);
+      border: 1px solid var(--accent);
+      font-weight: 600;
+    }
+    .btn-primary:hover { background: #b8972e; border-color: #b8972e; }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-outline:hover { border-color: var(--accent); color: var(--accent); }
+
+    .cta .btn {
+      flex: 1;
+      justify-content: center;
+      padding: 0.75rem 1.2rem;
+      font-size: 0.88rem;
+    }
+
+    /* ── Architecture Section ── */
+    .section {
+      width: 100%;
+      max-width: 680px;
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-size: 0.82rem;
+      margin-bottom: 1rem;
+    }
+
+    .arch-flow {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 0.4rem;
+      padding: 1rem 1.2rem;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+    }
+
+    .arch-node {
+      padding: 0.35rem 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      background: var(--bg);
+    }
+
+    .arch-node.api { border-color: var(--green); color: var(--green); }
+    .arch-node.service { border-color: var(--accent); color: var(--accent); }
+    .arch-node.core { border-color: #bc8cff; color: #bc8cff; }
+    .arch-node.infra { border-color: #58a6ff; color: #58a6ff; }
+
+    .arch-arrow { color: var(--muted); font-size: 0.9rem; }
+
+    /* ── Endpoints Table ── */
+    .endpoint-table {
+      width: 100%;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .endpoint-row {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      padding: 0.6rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.82rem;
+    }
+    .endpoint-row:last-child { border-bottom: none; }
+
+    .method {
+      display: inline-block;
+      padding: 0.1rem 0.5rem;
+      border-radius: 2px;
+      font-size: 0.68rem;
+      font-weight: 700;
+      min-width: 42px;
+      text-align: center;
+    }
+    .method.get { background: rgba(40, 200, 64, 0.15); color: var(--green); }
+    .method.post { background: rgba(201, 168, 76, 0.15); color: var(--accent); }
+
+    .endpoint-path { color: var(--text); font-weight: 500; }
+    .endpoint-desc { color: var(--muted); font-size: 0.75rem; margin-left: auto; }
+
+    /* ── Footer ── */
+    .footer {
+      width: 100%;
+      max-width: 680px;
+      text-align: center;
+      margin-top: 2rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid var(--border);
+    }
+
+    .footer-line { font-size: 0.82rem; margin-bottom: 0.5rem; }
+    .footer-copy { font-size: 0.72rem; color: var(--muted); margin-bottom: 0.3rem; }
+    .footer-links { font-size: 0.72rem; }
+    .footer-links a {
+      color: var(--border);
+      border-bottom: 1px solid transparent;
+      transition: border-color 0.2s ease, color 0.2s ease;
+    }
+    .footer-links a:hover { color: var(--accent); border-color: rgba(201, 168, 76, 0.5); }
+
+    /* ── Command Palette ── */
+    .cmd-palette {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      padding-top: 20vh;
+    }
+    .cmd-palette[hidden] { display: none; }
+
+    .cmd-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.6);
+      backdrop-filter: blur(4px);
+      -webkit-backdrop-filter: blur(4px);
+    }
+
+    .cmd-modal {
+      position: relative;
+      width: 100%;
+      max-width: 520px;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.4);
+      margin: 0 1.2rem;
+    }
+
+    .cmd-input-row {
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+      padding: 0.8rem 1.2rem;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .cmd-icon { color: var(--accent); font-weight: 600; font-size: 1rem; }
+
+    .cmd-search {
+      flex: 1;
+      background: none;
+      border: none;
+      outline: none;
+      font-family: var(--font);
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+    .cmd-search::placeholder { color: var(--muted); }
+
+    .cmd-kbd {
+      font-family: var(--font);
+      font-size: 0.66rem;
+      color: var(--muted);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 2px 6px;
+      border-radius: 3px;
+    }
+
+    .cmd-list {
+      list-style: none;
+      max-height: 300px;
+      overflow-y: auto;
+      padding: 0.4rem 0;
+    }
+
+    .cmd-item {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.6rem 1.2rem;
+      font-size: 0.82rem;
+      color: var(--text);
+      cursor: pointer;
+      transition: background 0.1s;
+    }
+    .cmd-item:hover, .cmd-item.active { background: rgba(201, 168, 76, 0.1); }
+
+    .cmd-item-icon { font-size: 0.9rem; width: 1.4rem; text-align: center; color: var(--accent); }
+    .cmd-item-label { flex: 1; }
+    .cmd-item-hint { font-size: 0.70rem; color: var(--muted); }
+
+    .cmd-footer {
+      display: flex;
+      gap: 1.2rem;
+      padding: 0.5rem 1.2rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.66rem;
+      color: var(--muted);
+    }
+    .cmd-footer kbd {
+      font-family: var(--font);
+      background: var(--bg);
+      border: 1px solid var(--border);
+      padding: 1px 4px;
+      border-radius: 2px;
+      margin-right: 0.2rem;
+    }
+
+    #cli-input-display { color: var(--text); font-size: 0.82rem; white-space: pre; }
+    .cli-response { font-size: 0.82rem; color: var(--muted); padding-left: 0.4rem; }
+    .cli-response.error { color: #f87171; }
+    .cli-response.accent { color: var(--accent); }
+
+    .exit-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9998;
+      background: #000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.8s ease;
+    }
+    .exit-overlay.active { opacity: 1; pointer-events: all; }
+
+    /* ── Status indicator ── */
+    .status-dot {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--green);
+      margin-right: 0.4rem;
+      animation: pulse-dot 2s ease infinite;
+    }
+    @keyframes pulse-dot {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.4; }
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      padding: 0.15rem 0.6rem;
+      border-radius: 999px;
+      font-size: 0.72rem;
+      color: var(--green);
+    }
+
+    @media (max-width: 600px) {
+      .nav-links { gap: var(--s2); }
+      .nav-brand { font-size: 0.70rem; }
+      .nav-links a { font-size: 0.68rem; }
+      .nav-kbd { display: none; }
+      .cta { flex-direction: column; }
+      .arch-flow { flex-direction: column; }
+    }
+
+    @media (max-width: 480px) {
+      .term-body { padding: 1.2rem; }
+      .proj-title { font-size: 1.3rem; }
+      .boot-body { padding: 1.2rem; }
+    }
+
+    /* ── Matrix Theme Easter Egg ── */
+    body.matrix-theme {
+      --bg: #000000;
+      --surface: #0a0a0a;
+      --text: #00ff41;
+      --accent: #00ff41;
+      --muted: #008f11;
+      --border: #003b00;
+    }
+    body.matrix-theme * {
+      text-shadow: 0 0 5px rgba(0, 255, 65, 0.4);
+    }
+    body.matrix-theme .cmd-palette,
+    body.matrix-theme .cmd-modal {
+      border-color: var(--accent);
+      box-shadow: 0 0 20px rgba(0, 255, 65, 0.2);
+    }
+  </style>
 </head>
 <body>
-    <div class="container">
-        <header>
-            <h1>RAGOps API</h1>
-            <p class="subtitle">Production-style Retrieval-Augmented Generation service</p>
-            <span class="badge">v{{ version }} &mdash; Live Demo</span>
-        </header>
 
-        <section class="hero">
-            <p>
-                A containerised RAG pipeline built with <strong>FastAPI</strong>,
-                <strong>PostgreSQL + pgvector</strong>, and <strong>sentence-transformers</strong>.
-                This is a <strong>fully functional demo</strong> &mdash; upload documents, ask questions,
-                and see the complete retrieval-augmented generation pipeline in action.
-            </p>
-        </section>
+  <div id="exit-overlay" class="exit-overlay"></div>
 
-        <section class="links">
-            <a href="/docs" class="btn">Try the API (Swagger UI)</a>
-            <a href="/health" class="btn btn-outline">Health Check</a>
-            <a href="https://github.com/Archit-Konde/RAGOps" class="btn btn-outline">GitHub</a>
-        </section>
-
-        <section class="how-it-works">
-            <h2>How It Works</h2>
-            <div class="steps">
-                <div class="step">
-                    <div class="step-num">1</div>
-                    <div class="step-text">
-                        <strong>Ingest</strong>
-                        <span>Upload a .txt, .md, or .pdf file via <code>POST /v1/ingest</code>. The pipeline chunks the text, generates embeddings with sentence-transformers, and stores everything in PostgreSQL + pgvector.</span>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-num">2</div>
-                    <div class="step-text">
-                        <strong>Query</strong>
-                        <span>Ask a question via <code>POST /v1/query</code>. The pipeline embeds your query, performs vector similarity search, reranks results with a cross-encoder, and generates an answer using an LLM.</span>
-                    </div>
-                </div>
-                <div class="step">
-                    <div class="step-num">3</div>
-                    <div class="step-text">
-                        <strong>Get Answers</strong>
-                        <span>Receive a grounded answer with source attribution &mdash; every claim is traced back to specific document chunks.</span>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section class="architecture">
-            <h2>Architecture</h2>
-            <div class="arch-diagram">
-                <div class="arch-col">
-                    <div class="arch-box client">Client</div>
-                </div>
-                <div class="arch-arrow">&rarr;</div>
-                <div class="arch-col">
-                    <div class="arch-label">FastAPI</div>
-                    <div class="arch-box endpoint">/health</div>
-                    <div class="arch-box endpoint">/v1/ingest</div>
-                    <div class="arch-box endpoint">/v1/query</div>
-                </div>
-                <div class="arch-arrow">&rarr;</div>
-                <div class="arch-col">
-                    <div class="arch-label">Services</div>
-                    <div class="arch-box service">ingest_service</div>
-                    <div class="arch-box service">rag_service</div>
-                </div>
-                <div class="arch-arrow">&rarr;</div>
-                <div class="arch-col">
-                    <div class="arch-label">Core</div>
-                    <div class="arch-box core">chunking</div>
-                    <div class="arch-box core">embedding</div>
-                    <div class="arch-box core">rerank</div>
-                </div>
-                <div class="arch-arrow">&rarr;</div>
-                <div class="arch-col">
-                    <div class="arch-box db">PostgreSQL<br>+ pgvector</div>
-                    <div class="arch-box llm">LLM API</div>
-                </div>
-            </div>
-        </section>
-
-        <section class="stack">
-            <h2>Tech Stack</h2>
-            <div class="stack-grid">
-                <div class="stack-item">
-                    <strong>API</strong>
-                    <span>FastAPI + Uvicorn</span>
-                </div>
-                <div class="stack-item">
-                    <strong>Vector Store</strong>
-                    <span>PostgreSQL 15 + pgvector</span>
-                </div>
-                <div class="stack-item">
-                    <strong>Embeddings</strong>
-                    <span>all-MiniLM-L6-v2 (384d)</span>
-                </div>
-                <div class="stack-item">
-                    <strong>Reranker</strong>
-                    <span>ms-marco-MiniLM-L-6-v2</span>
-                </div>
-                <div class="stack-item">
-                    <strong>LLM</strong>
-                    <span>OpenAI-compatible API</span>
-                </div>
-                <div class="stack-item">
-                    <strong>Search</strong>
-                    <span>HNSW cosine + RRF</span>
-                </div>
-            </div>
-        </section>
-
-        <section class="endpoints">
-            <h2>API Endpoints</h2>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Method</th>
-                        <th>Path</th>
-                        <th>Description</th>
-                    </tr>
-                </thead>
-                <tbody>
-                    <tr>
-                        <td><span class="method get">GET</span></td>
-                        <td><code>/health</code></td>
-                        <td>Liveness probe</td>
-                    </tr>
-                    <tr>
-                        <td><span class="method post">POST</span></td>
-                        <td><code>/v1/ingest</code></td>
-                        <td>Upload & ingest a document (PDF, TXT, MD)</td>
-                    </tr>
-                    <tr>
-                        <td><span class="method post">POST</span></td>
-                        <td><code>/v1/query</code></td>
-                        <td>Query the RAG pipeline</td>
-                    </tr>
-                </tbody>
-            </table>
-        </section>
-
-        <footer>
-            <p>Built by <a href="https://github.com/Archit-Konde">Archit Konde</a></p>
-        </footer>
+  <!-- Boot Sequence Overlay -->
+  <div id="boot-overlay" class="boot-overlay" aria-hidden="true">
+    <div class="boot-term">
+      <div class="term-bar">
+        <div class="dots">
+          <span class="dot d-r"></span>
+          <span class="dot d-y"></span>
+          <span class="dot d-g"></span>
+        </div>
+        <span class="bar-label">archit@portfolio: ~/ragops</span>
+      </div>
+      <div class="boot-body" id="boot-body"></div>
     </div>
+  </div>
+
+  <!-- Command Palette -->
+  <div id="cmd-palette" class="cmd-palette" role="dialog" aria-modal="true" aria-label="Command palette" hidden>
+    <div class="cmd-backdrop"></div>
+    <div class="cmd-modal">
+      <div class="cmd-input-row">
+        <span class="cmd-icon">&gt;</span>
+        <input id="cmd-input" class="cmd-search" type="text" placeholder="Type a command..." autocomplete="off" spellcheck="false" />
+        <kbd class="cmd-kbd">ESC</kbd>
+      </div>
+      <ul id="cmd-list" class="cmd-list" role="listbox"></ul>
+      <div class="cmd-footer">
+        <span><kbd>&#8593;&#8595;</kbd> navigate</span>
+        <span><kbd>&#8629;</kbd> select</span>
+        <span><kbd>esc</kbd> close</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Navbar -->
+  <nav id="navbar">
+    <a href="https://archit-konde.github.io/" class="nav-brand">
+      archit<span class="accent">@</span>portfolio<span class="accent">:~$</span>
+    </a>
+    <ul class="nav-links">
+      <li><a href="/docs" target="_blank"><span class="nav-slash">&rarr;</span>&nbsp;api docs</a></li>
+      <li><a href="https://github.com/Archit-Konde/RAGOps" target="_blank" rel="noopener noreferrer"><span class="nav-slash">./</span>github</a></li>
+      <li><a href="https://huggingface.co/spaces/architechs/RAG" target="_blank" rel="noopener noreferrer"><span class="nav-slash">./</span>rag v1</a></li>
+      <li><a href="https://archit-konde.github.io/"><span class="nav-slash">&larr;</span>&nbsp;portfolio</a></li>
+    </ul>
+  </nav>
+
+  <div class="page">
+
+    <!-- Main Terminal -->
+    <div class="term">
+      <div class="term-bar">
+        <div class="dots">
+          <span class="dot d-r"></span>
+          <span class="dot d-y"></span>
+          <span class="dot d-g"></span>
+        </div>
+        <span class="bar-label">archit@portfolio: ~/ragops</span>
+      </div>
+
+      <div class="term-body">
+        <p class="t-line">
+          <span class="t-prompt">archit@portfolio:~$</span>
+          <span class="t-cmd"> ls ./ragops/</span>
+        </p>
+
+        <p class="proj-title">RAGOps</p>
+
+        <p class="proj-sub">
+          Production-style RAG service upgrading the from-scratch pipeline.<br />
+          FastAPI + pgvector + sentence-transformers. Fully functional live demo.
+        </p>
+
+        <p class="t-line">
+          <span class="t-prompt">archit@portfolio:~$</span>
+          <span class="t-cmd"> cat tech_stack.json</span>
+        </p>
+
+        <div class="tech-row">
+          <span class="tag">fastapi</span>
+          <span class="tag">postgresql</span>
+          <span class="tag">pgvector</span>
+          <span class="tag">sentence-transformers</span>
+          <span class="tag">cross-encoder</span>
+          <span class="tag">asyncpg</span>
+          <span class="tag">docker</span>
+          <span class="tag">pytest</span>
+        </div>
+
+        <p class="t-out">
+          // routers &rarr; services &rarr; rag_core &rarr; PostgreSQL + pgvector<br />
+          // ingest_service &rarr; rag_service &rarr; chunking &rarr; embedding &rarr; rerank<br />
+          // HNSW cosine search &middot; cross-encoder rerank &middot; grounded generation
+        </p>
+
+        <p class="t-line" style="margin-top: 0.8rem;">
+          <span class="t-prompt">archit@portfolio:~$</span>
+          <span class="t-cmd"> cat features.txt</span>
+        </p>
+
+        <div style="padding-left: 0.4rem; display: flex; flex-direction: column; gap: 0.2rem;">
+          <p class="t-out">&rarr; document ingestion with SHA-256 content-hash deduplication</p>
+          <p class="t-out">&rarr; recursive text chunking with configurable separators &amp; overlap</p>
+          <p class="t-out">&rarr; sentence embeddings via all-MiniLM-L6-v2 &middot; L2-normalized 384d</p>
+          <p class="t-out">&rarr; HNSW index on pgvector &middot; cosine similarity search (m=16, ef=64)</p>
+          <p class="t-out">&rarr; cross-encoder reranking &middot; ms-marco-MiniLM &middot; raw logit scoring</p>
+          <p class="t-out">&rarr; grounded generation &middot; Groq LLM &middot; source attribution per claim</p>
+          <p class="t-out">&rarr; async everywhere &middot; SQLAlchemy 2.0 + asyncpg &middot; httpx connection pool</p>
+          <p class="t-out">&rarr; evaluation benchmark &middot; Precision@k &middot; Recall@k &middot; MRR</p>
+          <p class="t-out">&rarr; Docker + CI/CD &middot; GitHub Actions &middot; ruff linting</p>
+        </div>
+
+        <p class="t-line" style="margin-top: 0.8rem;">
+          <span class="t-prompt">archit@portfolio:~$</span>
+          <span class="t-cmd"> curl /health</span>
+        </p>
+        <p class="t-out"><span class="status-dot"></span>{"status": "ok", "version": "{{ version }}"}</p>
+
+        <p class="t-line" style="margin-top: 0.8rem;" id="interactive-prompt">
+          <span class="t-prompt">archit@portfolio:~$</span>
+          <span id="cli-input-display"></span><span class="cursor" id="cli-cursor"> &#9608;</span>
+        </p>
+        <div id="cli-output" style="display:flex;flex-direction:column;gap:0.2rem;"></div>
+      </div>
+    </div>
+
+    <!-- CTA Buttons -->
+    <div class="cta">
+      <a href="/docs" target="_blank" class="btn btn-primary">
+        &rarr; &nbsp;try the API
+      </a>
+      <a href="https://github.com/Archit-Konde/RAGOps" target="_blank" rel="noopener noreferrer" class="btn btn-outline">
+        ./ &nbsp;source code
+      </a>
+    </div>
+
+    <!-- Architecture -->
+    <div class="section">
+      <p class="t-line section-title">
+        <span class="t-prompt">archit@portfolio:~$</span>
+        <span class="t-cmd"> cat architecture.txt</span>
+      </p>
+      <div class="arch-flow">
+        <span class="arch-node api">Client</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-node api">/v1/ingest</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-node service">ingest_service</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-node core">chunking</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-node core">embedding</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-node infra">pgvector</span>
+      </div>
+      <div class="arch-flow" style="margin-top: 0.5rem;">
+        <span class="arch-node api">Client</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-node api">/v1/query</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-node service">rag_service</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-node core">rerank</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-node infra">LLM API</span>
+        <span class="arch-arrow">&rarr;</span>
+        <span class="arch-node api">answer</span>
+      </div>
+    </div>
+
+    <!-- Endpoints -->
+    <div class="section">
+      <p class="t-line section-title">
+        <span class="t-prompt">archit@portfolio:~$</span>
+        <span class="t-cmd"> cat endpoints.json</span>
+      </p>
+      <div class="endpoint-table">
+        <div class="endpoint-row">
+          <span class="method get">GET</span>
+          <span class="endpoint-path">/health</span>
+          <span class="endpoint-desc">liveness probe</span>
+        </div>
+        <div class="endpoint-row">
+          <span class="method post">POST</span>
+          <span class="endpoint-path">/v1/ingest</span>
+          <span class="endpoint-desc">upload &amp; ingest document (PDF, TXT, MD)</span>
+        </div>
+        <div class="endpoint-row">
+          <span class="method post">POST</span>
+          <span class="endpoint-path">/v1/query</span>
+          <span class="endpoint-desc">query the RAG pipeline</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p class="footer-line">
+        <span class="t-prompt">archit@portfolio:~$</span>
+        <span class="t-cmd"> <span style="color: var(--accent);">exit 0</span></span>
+      </p>
+      <p class="footer-copy">
+        &copy; <span id="footer-year">2026</span> All rights reserved. Designed &amp; Developed by
+        <a href="https://archit-konde.github.io/" style="color: var(--accent); border-bottom: 1px solid transparent; transition: border-color 0.2s;">Archit Konde</a>
+      </p>
+      <p class="footer-links">
+        <a href="https://github.com/Archit-Konde/RAGOps" target="_blank" rel="noopener noreferrer">source on GitHub &#8599;</a>
+        &nbsp;&middot;&nbsp;
+        <a href="https://huggingface.co/spaces/architechs/RAG" target="_blank" rel="noopener noreferrer">RAG v1 &#8599;</a>
+      </p>
+    </footer>
+
+  </div>
+
+  <script>
+  /* ── Boot Sequence ── */
+  (function bootSequence() {
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      var o = document.getElementById('boot-overlay');
+      if (o) o.remove();
+      return;
+    }
+    if (sessionStorage.getItem('boot-seen')) {
+      var o = document.getElementById('boot-overlay');
+      if (o) o.remove();
+      return;
+    }
+
+    var lines = [
+      { html: '<span class="boot-accent">&gt;</span> initializing ragops...', delay: 0 },
+      { html: 'connecting to postgresql+asyncpg <span class="boot-ok">[OK]</span>', delay: 280 },
+      { html: 'running migrations (001_init.sql) <span class="boot-ok">[OK]</span>', delay: 460 },
+      { html: 'loading chunking.py <span class="boot-ok">[OK]</span>', delay: 640 },
+      { html: 'loading embedding.py <span class="boot-ok">[OK]</span>', delay: 780 },
+      { html: 'loading rerank.py <span class="boot-ok">[OK]</span>', delay: 920 },
+      { html: '<span class="boot-muted">model: all-MiniLM-L6-v2 (384d) ... loaded</span>', delay: 1150 },
+      { html: '<span class="boot-muted">cross-encoder: ms-marco-MiniLM-L-6-v2 ... loaded</span>', delay: 1400 },
+      { html: '<span class="boot-muted">pgvector HNSW index: m=16 ef=64 ... ready</span>', delay: 1600 },
+      { html: 'uvicorn running on <span class="boot-accent">0.0.0.0:7860</span>', delay: 1850 },
+      { html: '<span class="boot-accent">&gt;</span> <span class="cursor">&#9608;</span>', delay: 2050 }
+    ];
+
+    var body = document.getElementById('boot-body');
+    lines.forEach(function(l) {
+      setTimeout(function() {
+        var p = document.createElement('p');
+        p.className = 'boot-line';
+        p.innerHTML = l.html;
+        body.appendChild(p);
+      }, l.delay);
+    });
+
+    setTimeout(function() {
+      var overlay = document.getElementById('boot-overlay');
+      overlay.classList.add('done');
+      sessionStorage.setItem('boot-seen', '1');
+      setTimeout(function() { overlay.remove(); }, 700);
+    }, 2600);
+  })();
+
+  /* ── Command Palette ── */
+  (function commandPalette() {
+    var COMMANDS = [
+      { icon: '\u2192', label: 'Try the API (Swagger)', hint: '/docs', action: function() { window.open('/docs', '_blank'); } },
+      { icon: './', label: 'View source on GitHub', hint: 'github.com', action: function() { window.open('https://github.com/Archit-Konde/RAGOps', '_blank'); } },
+      { icon: '\u2190', label: 'RAG v1 (from scratch)', hint: 'HF Spaces', action: function() { window.open('https://huggingface.co/spaces/architechs/RAG', '_blank'); } },
+      { icon: '\u2190', label: 'Back to portfolio', hint: 'archit-konde.github.io', action: function() { window.location.href = 'https://archit-konde.github.io/'; } },
+      { icon: '#', label: 'Check health endpoint', hint: '/health', action: function() { window.open('/health', '_blank'); } },
+      { icon: '{}', label: 'View API schema', hint: '/openapi.json', action: function() { window.open('/openapi.json', '_blank'); } }
+    ];
+
+    var palette = document.getElementById('cmd-palette');
+    var input = document.getElementById('cmd-input');
+    var list = document.getElementById('cmd-list');
+    var activeIdx = 0;
+    var filtered = COMMANDS.slice();
+
+    function render() {
+      list.innerHTML = '';
+      filtered.forEach(function(cmd, i) {
+        var li = document.createElement('li');
+        li.className = 'cmd-item' + (i === activeIdx ? ' active' : '');
+        li.setAttribute('role', 'option');
+        li.innerHTML =
+          '<span class="cmd-item-icon">' + cmd.icon + '</span>' +
+          '<span class="cmd-item-label">' + cmd.label + '</span>' +
+          '<span class="cmd-item-hint">' + cmd.hint + '</span>';
+        li.addEventListener('click', function() { cmd.action(); close(); });
+        li.addEventListener('mouseenter', function() { activeIdx = i; render(); });
+        list.appendChild(li);
+      });
+    }
+
+    function open() {
+      palette.hidden = false;
+      input.value = '';
+      filtered = COMMANDS.slice();
+      activeIdx = 0;
+      render();
+      requestAnimationFrame(function() { input.focus(); });
+    }
+
+    function close() {
+      palette.hidden = true;
+      input.value = '';
+    }
+
+    function fuzzyMatch(query, text) {
+      var q = query.toLowerCase();
+      var t = text.toLowerCase();
+      var qi = 0;
+      for (var ti = 0; ti < t.length && qi < q.length; ti++) {
+        if (t[ti] === q[qi]) qi++;
+      }
+      return qi === q.length;
+    }
+
+    input.addEventListener('input', function() {
+      var q = input.value.trim();
+      var qLower = q.toLowerCase();
+
+      if (qLower === 'sudo') {
+        filtered = [{ icon: '!!', label: 'Nice try. Permission denied.', hint: 'you are not root', action: function() {} }];
+        activeIdx = 0; render(); return;
+      }
+      if (qLower === 'help') {
+        filtered = [
+          { icon: '?', label: 'SYSTEM CMD: List Shortcuts', hint: 'show-key-map', action: function() { alert('Shortcuts:\nSpace: Toggle Menu\nCtrl+K: Command Palette'); } },
+          { icon: '#', label: 'SYSTEM CMD: Toggle Matrix Mode', hint: 'theme-override', action: function() { document.body.classList.toggle('matrix-theme'); close(); } }
+        ];
+        activeIdx = 0; render(); return;
+      }
+      if (qLower === 'matrix') {
+        filtered = [{ icon: '[x]', label: 'Follow the white rabbit...', hint: 'toggle-theme', action: function() { document.body.classList.toggle('matrix-theme'); close(); } }];
+        activeIdx = 0; render(); return;
+      }
+      if (qLower === 'archit') {
+        filtered = [{ icon: '@', label: 'Lead ML Engineer / Researcher', hint: 'creator', action: function() { alert('Built with focus and precision. - Archit'); } }];
+        activeIdx = 0; render(); return;
+      }
+      if (qLower === 'reboot') {
+        filtered = [{ icon: '[!]', label: 'Rebooting system...', hint: 'shutdown -r now', action: function() {
+          close();
+          document.body.style.transition = 'opacity 0.4s';
+          document.body.style.opacity = '0';
+          setTimeout(function() { sessionStorage.removeItem('boot-seen'); window.location.reload(); }, 500);
+        } }];
+        activeIdx = 0; render(); return;
+      }
+
+      filtered = q
+        ? COMMANDS.filter(function(c) { return fuzzyMatch(q, c.label) || fuzzyMatch(q, c.hint); })
+        : COMMANDS.slice();
+      activeIdx = 0;
+      render();
+    });
+
+    input.addEventListener('keydown', function(e) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); activeIdx = (activeIdx + 1) % Math.max(filtered.length, 1); render(); }
+      else if (e.key === 'ArrowUp') { e.preventDefault(); activeIdx = (activeIdx - 1 + filtered.length) % Math.max(filtered.length, 1); render(); }
+      else if (e.key === 'Enter') { e.preventDefault(); if (filtered[activeIdx]) { filtered[activeIdx].action(); close(); } }
+      else if (e.key === 'Escape') { close(); }
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault(); e.stopImmediatePropagation();
+        palette.hidden ? open() : close();
+      }
+    }, { capture: true });
+
+    palette.querySelector('.cmd-backdrop').addEventListener('click', close);
+
+    /* Keyboard sequence buffer */
+    var keyBuffer = '';
+    var keyTimer = null;
+    document.addEventListener('keydown', function(e) {
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+      if (['Control', 'Shift', 'Alt', 'Meta'].includes(e.key)) return;
+
+      keyBuffer += e.key.toLowerCase();
+      if (keyTimer) clearTimeout(keyTimer);
+
+      keyTimer = setTimeout(function() {
+        var seq = keyBuffer;
+        keyBuffer = '';
+        if (seq === 'matrix') { document.body.classList.toggle('matrix-theme'); return; }
+        if (seq === 'help') { open(); input.value = 'help'; input.dispatchEvent(new Event('input')); return; }
+        if (seq === 'archit') { open(); input.value = 'archit'; input.dispatchEvent(new Event('input')); return; }
+      }, 350);
+    });
+  })();
+
+  /* ── Konami Code ── */
+  (function konamiCode() {
+    var SEQ = ['ArrowUp','ArrowUp','ArrowDown','ArrowDown','ArrowLeft','ArrowRight','ArrowLeft','ArrowRight','b','a'];
+    var idx = 0;
+    document.addEventListener('keydown', function(e) {
+      if (e.key === SEQ[idx]) {
+        idx++;
+        if (idx === SEQ.length) {
+          idx = 0;
+          var colors = ['#C9A84C', '#f87171', '#6366f1', '#28c840', '#fb923c', '#C9A84C'];
+          var ci = 0;
+          var interval = setInterval(function() {
+            document.documentElement.style.setProperty('--accent', colors[ci++]);
+            if (ci >= colors.length) clearInterval(interval);
+          }, 350);
+        }
+      } else { idx = e.key === SEQ[0] ? 1 : 0; }
+    });
+  })();
+
+  /* ── Dev Console Easter Egg ── */
+  (function devConsole() {
+    var gold = 'color:#C9A84C;font-family:monospace;font-weight:bold;';
+    var grey = 'color:#858585;font-family:monospace;';
+    var white = 'color:#d4d4d4;font-family:monospace;';
+    var green = 'color:#28c840;font-family:monospace;font-weight:bold;';
+    var line = 'color:#3e3e42;font-family:monospace;';
+
+    console.log('%c> archit@portfolio:~/ragops$', gold);
+    console.log('%c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500', line);
+    console.log('%c  RAGOps \u2014 Production RAG Service', white);
+    console.log('%c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500', line);
+    console.log('%c  Stack  \u2192  FastAPI \u00b7 pgvector \u00b7 sentence-transformers \u00b7 Docker', grey);
+    console.log('%c  Repo   \u2192  github.com/Archit-Konde/RAGOps', gold);
+    console.log('%c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500', line);
+    console.log('%c  Try Ctrl+K for the command palette', green);
+    console.log('%c  Or try the Konami code...', grey);
+    console.log('%c\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500', line);
+  })();
+
+  /* ── Interactive CLI ── */
+  (function interactiveCLI() {
+    var display = document.getElementById('cli-input-display');
+    var output = document.getElementById('cli-output');
+    var cursor = document.getElementById('cli-cursor');
+    var prompt = document.getElementById('interactive-prompt');
+    if (!display || !output) return;
+
+    var buffer = '';
+    var active = false;
+
+    var termBody = prompt.closest('.term-body');
+    if (termBody) {
+      termBody.style.cursor = 'text';
+      termBody.addEventListener('click', function(e) { e.stopPropagation(); active = true; });
+      document.addEventListener('click', function() { active = false; });
+    }
+
+    function addResponse(text, cls) {
+      var p = document.createElement('p');
+      p.className = 'cli-response' + (cls ? ' ' + cls : '');
+      p.textContent = text;
+      output.appendChild(p);
+      p.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function addPromptLine(cmd) {
+      var p = document.createElement('p');
+      p.className = 't-line';
+      p.innerHTML = '<span class="t-prompt">archit@portfolio:~$</span> ' + cmd;
+      output.appendChild(p);
+    }
+
+    function exitAnimation() {
+      var overlay = document.getElementById('exit-overlay');
+      if (!overlay) return;
+      overlay.classList.add('active');
+      setTimeout(function() { overlay.classList.remove('active'); }, 2000);
+    }
+
+    function handleCommand(cmd) {
+      var lower = cmd.trim().toLowerCase();
+      addPromptLine(cmd);
+
+      var autoClearDelay = 2500;
+
+      if (lower === 'help') {
+        addResponse('Available commands:', 'accent');
+        addResponse('  help           \u2014 show this message');
+        addResponse('  ls             \u2014 list pipeline components');
+        addResponse('  cd docs        \u2014 open Swagger UI');
+        addResponse('  cat stack      \u2014 show tech stack');
+        addResponse('  cat pipeline   \u2014 show data flow');
+        addResponse('  curl /health   \u2014 check API health');
+        addResponse('  clear          \u2014 clear output');
+        addResponse('  exit / exit 0  \u2014 shutdown animation');
+        addResponse('  sudo <cmd>     \u2014 try it :)');
+        addResponse('  matrix         \u2014 toggle matrix theme');
+        addResponse('  reboot         \u2014 replay boot sequence');
+      } else if (lower === 'ls') {
+        addResponse('\u2192 chunking.py     \u2014 recursive text splitting (512 tokens, 64 overlap)');
+        addResponse('\u2192 embedding.py    \u2014 all-MiniLM-L6-v2, L2-normalized 384d');
+        addResponse('\u2192 rerank.py       \u2014 ms-marco cross-encoder, raw logit scoring');
+        addResponse('\u2192 retrieval.py    \u2014 reciprocal rank fusion');
+        addResponse('\u2192 rag_service.py  \u2014 orchestration: search \u2192 rerank \u2192 generate');
+        addResponse('\u2192 ingest_service  \u2014 chunk \u2192 embed \u2192 store + SHA-256 dedup');
+        addResponse('\u2192 db/models.py    \u2014 Document + Chunk (pgvector HNSW)');
+      } else if (lower === 'cd docs') {
+        addResponse('Redirecting to Swagger UI...', 'accent');
+        setTimeout(function() { window.open('/docs', '_blank'); }, 500);
+      } else if (lower === 'cat stack') {
+        addResponse('fastapi \u00b7 postgresql+pgvector \u00b7 sentence-transformers \u00b7 cross-encoder \u00b7 asyncpg \u00b7 docker \u00b7 pytest');
+      } else if (lower === 'cat pipeline') {
+        addResponse('INGEST:', 'accent');
+        addResponse('  file \u2192 chunker \u2192 embedder \u2192 pgvector (HNSW cosine)');
+        addResponse('');
+        addResponse('QUERY:', 'accent');
+        addResponse('  query \u2192 embed \u2192 pgvector search \u2192 cross-encoder rerank \u2192 LLM \u2192 answer');
+      } else if (lower === 'curl /health' || lower === 'curl health') {
+        addResponse('{"status": "ok", "version": "0.1.0"}', 'accent');
+      } else if (lower === 'clear') {
+        output.innerHTML = '';
+        return;
+      } else if (lower === 'exit' || lower === 'exit 0') {
+        addResponse('logout', 'accent');
+        addResponse('[Process completed]');
+        exitAnimation();
+        autoClearDelay = 4500;
+      } else if (lower.startsWith('sudo')) {
+        addResponse('Permission denied. You are not in the sudoers file.', 'error');
+        addResponse('This incident will be reported.', 'error');
+      } else if (lower === 'matrix') {
+        document.body.classList.toggle('matrix-theme');
+        addResponse('// toggling matrix theme...', 'accent');
+      } else if (lower === 'reboot') {
+        addResponse('Rebooting system...', 'accent');
+        setTimeout(function() {
+          document.body.style.transition = 'opacity 0.4s';
+          document.body.style.opacity = '0';
+          setTimeout(function() { sessionStorage.removeItem('boot-seen'); window.location.reload(); }, 500);
+        }, 500);
+      } else if (lower === '') {
+        return;
+      } else {
+        addResponse('command not found: ' + cmd.trim(), 'error');
+        addResponse("Type 'help' for available commands.");
+      }
+
+      setTimeout(function() { output.innerHTML = ''; }, autoClearDelay);
+    }
+
+    document.addEventListener('keydown', function(e) {
+      if (!active) return;
+      if (!document.getElementById('cmd-palette').hidden) return;
+      if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+      if (e.key === 'Backspace') {
+        e.preventDefault();
+        buffer = buffer.slice(0, -1);
+        display.textContent = buffer;
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        var cmd = buffer;
+        buffer = '';
+        display.textContent = '';
+        handleCommand(cmd);
+      } else if (e.key.length === 1) {
+        e.preventDefault();
+        buffer += e.key;
+        display.textContent = buffer;
+      }
+    });
+  })();
+
+  /* ── Utilities ── */
+  (function() {
+    var el = document.getElementById('footer-year');
+    if (el) el.textContent = new Date().getFullYear();
+  })();
+
+  (function() {
+    var btn = document.getElementById('backToTop');
+    if (!btn) return;
+    window.addEventListener('scroll', function() {
+      btn.classList.toggle('visible', window.scrollY > 300);
+    });
+    btn.addEventListener('click', function(e) {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  })();
+
+  (function() {
+    var toast = document.getElementById('cmd-toast');
+    if (!toast) return;
+    if (!sessionStorage.getItem('cmd-hint-shown')) {
+      setTimeout(function() { toast.classList.add('visible'); }, 1500);
+      setTimeout(function() { toast.classList.remove('visible'); }, 5500);
+      sessionStorage.setItem('cmd-hint-shown', '1');
+    }
+    document.addEventListener('keydown', function(e) {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        toast.classList.remove('visible');
+      }
+    });
+  })();
+  </script>
+
+  <a href="#" class="back-to-top" id="backToTop" title="Back to top">&#8593;</a>
+  <div class="cmd-toast" id="cmd-toast">press <kbd>Ctrl</kbd><kbd>K</kbd> for quick navigation</div>
 </body>
 </html>
