@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>404 — RAGOps</title>
+
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%231e1e1e'/><text x='5' y='25' font-family='monospace' font-size='22' font-weight='bold' fill='%23C9A84C'>%3E</text></svg>" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:ital,wght@0,400;0,600;0,700;1,400&display=swap" rel="stylesheet" />
+
+  <style>
+    :root {
+      --bg:      #1e1e1e;
+      --surface: #252526;
+      --border:  #3e3e42;
+      --text:    #d4d4d4;
+      --muted:   #858585;
+      --accent:  #C9A84C;
+      --font:    'JetBrains Mono', 'Fira Code', monospace;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    html, body {
+      height: 100%;
+      font-family: var(--font);
+      background: var(--bg);
+      color: var(--text);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: var(--accent); color: var(--bg); }
+
+    .page {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+    }
+
+    .term {
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--surface);
+      width: 100%;
+      max-width: 580px;
+    }
+
+    .term-bar {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      padding: 0.6rem 1.2rem;
+      background: rgba(62, 62, 66, 0.25);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .dots { display: flex; gap: 6px; }
+    .dot  { width: 12px; height: 12px; border-radius: 50%; }
+    .d-r  { background: #ff5f57; }
+    .d-y  { background: #febc2e; }
+    .d-g  { background: #28c840; }
+
+    .bar-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      margin: 0 auto;
+      padding-right: 46px;
+    }
+
+    .term-body {
+      padding: 1.6rem 2rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.6rem;
+      line-height: 1.6;
+    }
+
+    .line       { font-size: 0.82rem; }
+    .prompt     { color: var(--accent); font-weight: 600; }
+    .cmd        { color: var(--text); }
+    .error-line { color: #f14c4c; font-size: 0.82rem; }
+    .dim        { color: var(--muted); font-size: 0.78rem; }
+
+    .code-block { margin: 1.2rem 0 0.8rem 1rem; }
+
+    .err-code {
+      font-size: 4rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: -0.04em;
+      line-height: 1;
+    }
+
+    .err-msg {
+      font-size: 0.88rem;
+      color: var(--muted);
+      margin-top: 0.3rem;
+    }
+
+    .suggestions {
+      margin: 0.8rem 0 0 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .suggestions li {
+      list-style: none;
+      font-size: 0.80rem;
+      color: var(--muted);
+    }
+
+    .suggestions li::before {
+      content: '\2192 ';
+      color: var(--accent);
+    }
+
+    .home-btn {
+      display: inline-block;
+      margin: 1.4rem 0 0 1rem;
+      padding: 0.5rem 1.2rem;
+      border: 1px solid var(--accent);
+      color: var(--accent);
+      text-decoration: none;
+      font-family: var(--font);
+      font-size: 0.82rem;
+      transition: background 0.2s ease, color 0.2s ease;
+    }
+
+    .home-btn:hover {
+      background: var(--accent);
+      color: var(--bg);
+    }
+
+    .cursor {
+      color: var(--text);
+      animation: blink 1s step-end infinite;
+    }
+
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+
+    @media (max-width: 480px) {
+      .err-code { font-size: 3rem; }
+      .term-body { padding: 1.2rem; }
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <div class="term">
+
+      <div class="term-bar">
+        <div class="dots">
+          <span class="dot d-r"></span>
+          <span class="dot d-y"></span>
+          <span class="dot d-g"></span>
+        </div>
+        <span class="bar-label">archit@portfolio: ~/ragops/404</span>
+      </div>
+
+      <div class="term-body">
+
+        <p class="line">
+          <span class="prompt">archit@portfolio:~$</span>
+          <span class="cmd"> SELECT * FROM chunks WHERE page = '/the-page-you-wanted';</span>
+        </p>
+
+        <p class="error-line">
+          ERROR: relation "the_page_you_wanted" does not exist (pgvector returned 0 rows)
+        </p>
+
+        <div class="code-block">
+          <p class="err-code">404</p>
+          <p class="err-msg">// chunk not found.</p>
+        </div>
+
+        <p class="dim">the page you requested isn't in our vector store. maybe it was never indexed, or the embeddings drifted.</p>
+
+        <ul class="suggestions">
+          <li>double-check the URL for typos</li>
+          <li>the page may have been moved or renamed</li>
+          <li>head back to the project landing page</li>
+        </ul>
+
+        <a href="/RAGOps/" class="home-btn">
+          <span style="color: var(--accent);">&rarr;</span> &nbsp;go to project page
+        </a>
+
+        <p class="line" style="margin-top: 1.4rem;">
+          <span class="prompt">archit@portfolio:~$</span><span class="cursor"> &#9608;</span>
+        </p>
+
+      </div>
+    </div>
+  </div>
+</body>
+</html>

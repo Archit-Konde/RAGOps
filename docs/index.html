@@ -8,7 +8,7 @@
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#1e1e1e" />
   <meta property="og:type" content="website" />
-  <meta property="og:url" content="https://architechs-ragops.hf.space/" />
+  <meta property="og:url" content="https://archit-konde.github.io/RAGOps/" />
   <meta property="og:title" content="RAGOps — Archit Konde" />
   <meta property="og:description" content="Production RAG API with FastAPI, pgvector, cross-encoder reranking, and grounded generation. Fully functional live demo." />
   <meta property="og:locale" content="en_CA" />
@@ -16,7 +16,7 @@
   <meta name="twitter:creator" content="@architkonde" />
   <meta name="twitter:title" content="RAGOps — Archit Konde" />
   <meta name="twitter:description" content="Production RAG API. FastAPI + pgvector + sentence-transformers. Live demo." />
-  <link rel="canonical" href="https://architechs-ragops.hf.space/" />
+  <link rel="canonical" href="https://archit-konde.github.io/RAGOps/" />
   <title>RAGOps — Archit Konde</title>
   <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='4' fill='%231e1e1e'/><text x='5' y='25' font-family='monospace' font-size='22' font-weight='bold' fill='%23C9A84C'>%3E</text></svg>" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -628,7 +628,7 @@
       archit<span class="accent">@</span>portfolio<span class="accent">:~$</span>
     </a>
     <ul class="nav-links">
-      <li><a href="/docs" target="_blank"><span class="nav-slash">&rarr;</span>&nbsp;api docs</a></li>
+      <li><a href="https://architechs-ragops.hf.space/docs" target="_blank"><span class="nav-slash">&rarr;</span>&nbsp;api docs</a></li>
       <li><a href="https://github.com/Archit-Konde/RAGOps" target="_blank" rel="noopener noreferrer"><span class="nav-slash">./</span>github</a></li>
       <li><a href="https://huggingface.co/spaces/architechs/RAG" target="_blank" rel="noopener noreferrer"><span class="nav-slash">./</span>rag v1</a></li>
       <li><a href="https://archit-konde.github.io/"><span class="nav-slash">&larr;</span>&nbsp;portfolio</a></li>
@@ -704,7 +704,7 @@
           <span class="t-prompt">archit@portfolio:~$</span>
           <span class="t-cmd"> curl /health</span>
         </p>
-        <p class="t-out"><span class="status-dot"></span>{"status": "ok", "version": "{{ version }}"}</p>
+        <p class="t-out"><span class="status-dot"></span>{"status": "ok", "version": "<span id="api-version">0.1.0</span>"}</p>
 
         <p class="t-line" style="margin-top: 0.8rem;" id="interactive-prompt">
           <span class="t-prompt">archit@portfolio:~$</span>
@@ -716,7 +716,7 @@
 
     <!-- CTA Buttons -->
     <div class="cta">
-      <a href="/docs" target="_blank" class="btn btn-primary">
+      <a href="https://architechs-ragops.hf.space/docs" target="_blank" class="btn btn-primary">
         &rarr; &nbsp;try the API
       </a>
       <a href="https://github.com/Archit-Konde/RAGOps" target="_blank" rel="noopener noreferrer" class="btn btn-outline">
@@ -851,12 +851,12 @@
   /* ── Command Palette ── */
   (function commandPalette() {
     var COMMANDS = [
-      { icon: '\u2192', label: 'Try the API (Swagger)', hint: '/docs', action: function() { window.open('/docs', '_blank'); } },
+      { icon: '\u2192', label: 'Try the API (Swagger)', hint: '/docs', action: function() { window.open('https://architechs-ragops.hf.space/docs', '_blank'); } },
       { icon: './', label: 'View source on GitHub', hint: 'github.com', action: function() { window.open('https://github.com/Archit-Konde/RAGOps', '_blank'); } },
       { icon: '\u2190', label: 'RAG v1 (from scratch)', hint: 'HF Spaces', action: function() { window.open('https://huggingface.co/spaces/architechs/RAG', '_blank'); } },
       { icon: '\u2190', label: 'Back to portfolio', hint: 'archit-konde.github.io', action: function() { window.location.href = 'https://archit-konde.github.io/'; } },
-      { icon: '#', label: 'Check health endpoint', hint: '/health', action: function() { window.open('/health', '_blank'); } },
-      { icon: '{}', label: 'View API schema', hint: '/openapi.json', action: function() { window.open('/openapi.json', '_blank'); } }
+      { icon: '#', label: 'Check health endpoint', hint: '/health', action: function() { window.open('https://architechs-ragops.hf.space/health', '_blank'); } },
+      { icon: '{}', label: 'View API schema', hint: '/openapi.json', action: function() { window.open('https://architechs-ragops.hf.space/openapi.json', '_blank'); } }
     ];
 
     var palette = document.getElementById('cmd-palette');
@@ -1091,7 +1091,7 @@
         addResponse('\u2192 db/models.py    \u2014 Document + Chunk (pgvector HNSW)');
       } else if (lower === 'cd docs') {
         addResponse('Redirecting to Swagger UI...', 'accent');
-        setTimeout(function() { window.open('/docs', '_blank'); }, 500);
+        setTimeout(function() { window.open('https://architechs-ragops.hf.space/docs', '_blank'); }, 500);
       } else if (lower === 'cat stack') {
         addResponse('fastapi \u00b7 postgresql+pgvector \u00b7 sentence-transformers \u00b7 cross-encoder \u00b7 asyncpg \u00b7 docker \u00b7 pytest');
       } else if (lower === 'cat pipeline') {
@@ -1192,5 +1192,17 @@
 
   <a href="#" class="back-to-top" id="backToTop" title="Back to top">&#8593;</a>
   <div class="cmd-toast" id="cmd-toast">press <kbd>Ctrl</kbd><kbd>K</kbd> for quick navigation</div>
+
+  <script>
+  /* Fetch live version from API */
+  (function() {
+    var el = document.getElementById('api-version');
+    if (!el) return;
+    fetch('https://architechs-ragops.hf.space/health')
+      .then(function(r) { return r.json(); })
+      .then(function(d) { if (d.version) el.textContent = d.version; })
+      .catch(function() { /* keep hardcoded fallback */ });
+  })();
+  </script>
 </body>
 </html>

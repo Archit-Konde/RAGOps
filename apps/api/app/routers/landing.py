@@ -1,23 +1,15 @@
 """
-Landing page router.
+Landing page redirect — sends visitors to Swagger UI (the demo IS the API).
 """
 from __future__ import annotations
 
-from pathlib import Path
-
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
-from fastapi.templating import Jinja2Templates
-
-from apps.api.app import VERSION
+from fastapi import APIRouter
+from fastapi.responses import RedirectResponse
 
 router = APIRouter(tags=["landing"])
 
-_templates_dir = Path(__file__).resolve().parent.parent / "templates"
-templates = Jinja2Templates(directory=str(_templates_dir))
 
-
-@router.get("/", response_class=HTMLResponse)
-async def landing(request: Request):
-    """Project landing page."""
-    return templates.TemplateResponse("index.html", {"request": request, "version": VERSION})
+@router.get("/", include_in_schema=False)
+async def landing():
+    """Redirect root to interactive API docs."""
+    return RedirectResponse(url="/docs")
