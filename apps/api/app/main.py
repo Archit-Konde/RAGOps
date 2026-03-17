@@ -31,8 +31,12 @@ async def _run_migrations() -> None:
     if not migration_file.exists():
         return
     sql = migration_file.read_text()
+    # asyncpg does not support multiple statements in one execute(),
+    # so split on semicolons and run each statement individually.
+    statements = [s.strip() for s in sql.split(";") if s.strip()]
     async with db_session._engine.begin() as conn:
-        await conn.execute(text(sql))
+        for stmt in statements:
+            await conn.execute(text(stmt))
     logger.info("Database migrations applied successfully")
 
 
