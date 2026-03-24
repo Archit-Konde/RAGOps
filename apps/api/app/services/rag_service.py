@@ -48,13 +48,16 @@ SYSTEM_PROMPT = (
 # ---------------------------------------------------------------------------
 
 _http_client: httpx.AsyncClient | None = None
+_http_client_lock = asyncio.Lock()
 
 
 async def get_http_client() -> httpx.AsyncClient:
     """Return the shared httpx client, creating it on first call."""
     global _http_client
     if _http_client is None:
-        _http_client = httpx.AsyncClient(timeout=30.0)
+        async with _http_client_lock:
+            if _http_client is None:
+                _http_client = httpx.AsyncClient(timeout=30.0)
     return _http_client
 
 
