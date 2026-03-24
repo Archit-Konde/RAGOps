@@ -3,14 +3,12 @@ Application settings via pydantic-settings.
 
 All values can be overridden through environment variables or a .env file.
 """
+
 from __future__ import annotations
 
 from functools import lru_cache
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
-
-from packages.rag_core.embedding import EmbeddingModel
-from packages.rag_core.rerank import CrossEncoderReranker
 
 
 class Settings(BaseSettings):
@@ -24,9 +22,9 @@ class Settings(BaseSettings):
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
     OPENAI_MODEL: str = "gpt-4o-mini"
 
-    # Models — defaults sourced from rag_core classes
-    EMBEDDING_MODEL: str = EmbeddingModel.DEFAULT_MODEL
-    RERANK_MODEL: str = CrossEncoderReranker.DEFAULT_MODEL
+    # Models
+    EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
+    RERANK_MODEL: str = "cross-encoder/ms-marco-MiniLM-L-6-v2"
 
     # Retrieval tuning
     TOP_K_DENSE: int = 20
