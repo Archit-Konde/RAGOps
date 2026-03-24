@@ -22,30 +22,30 @@ pinned: false
 
 ```mermaid
 graph LR
-    Client -->|HTTP| FastAPI
+    Client -->|HTTP| API
 
-    subgraph FastAPI
+    subgraph API["FastAPI"]
         Health["/health"]
         Ingest["/v1/ingest"]
         Query["/v1/query"]
     end
 
-    subgraph Services
+    subgraph SVC["Services"]
         IS["ingest_service"]
         RS["rag_service"]
     end
 
-    subgraph rag_core
+    subgraph RAG["rag_core"]
         Chunker["chunking"]
         Embedder["embedding"]
         Reranker["rerank"]
     end
 
-    subgraph Database
+    subgraph DB["Database"]
         PG["PostgreSQL + pgvector"]
     end
 
-    subgraph External
+    subgraph EXT["External"]
         LLM["OpenAI-compatible LLM"]
     end
 
