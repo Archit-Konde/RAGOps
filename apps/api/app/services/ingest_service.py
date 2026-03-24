@@ -3,14 +3,15 @@ Document ingestion service.
 
 Orchestrates: read file → hash → dedup check → extract text → chunk → embed → store.
 """
+
 from __future__ import annotations
 
 import asyncio
 import hashlib
 import time
-from typing import Any, Dict
+from typing import Any
 
-from fastapi import UploadFile
+from fastapi import HTTPException, UploadFile
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -29,7 +30,7 @@ async def ingest_file(
     db: AsyncSession,
     embedder: EmbeddingModel,
     settings: Settings,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Ingest an uploaded file into the database.
 
@@ -62,7 +63,9 @@ async def ingest_file(
     chunks = _chunker.split_text(text)
 
     if not chunks:
-        raise ValueError(f"No chunks produced from file: {filename}")
+        raise HTTPException(
+            status_code=422, detail=f"No text chunks produced from file: {filename}"
+        )
 
     # 5. Embed (CPU-bound → run in thread)
     chunk_texts = [c["text"] for c in chunks]

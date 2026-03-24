@@ -3,9 +3,11 @@ FastAPI application factory.
 
 Entry point: uvicorn apps.api.app.main:app --host 0.0.0.0 --port 8000
 """
+
 from __future__ import annotations
 
 import logging
+import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 
@@ -13,8 +15,7 @@ from fastapi import FastAPI
 from sqlalchemy import text
 
 from apps.api.app import VERSION
-from apps.api.app.db import session as db_session
-from apps.api.app.db.session import close_db, init_db
+from apps.api.app.db.session import close_db, get_engine, init_db
 from apps.api.app.routers import health, ingest, landing, query
 from apps.api.app.services.rag_service import close_http_client
 from apps.api.app.settings import get_settings
@@ -32,12 +33,11 @@ async def _run_migrations() -> None:
     raw_sql = migration_file.read_text()
     # Strip SQL comments (-- ...) before splitting, since comments
     # may contain semicolons that break naive splitting.
-    import re
     sql = re.sub(r"--[^\n]*", "", raw_sql)
     # asyncpg does not support multiple statements in one execute(),
     # so split on semicolons and run each statement individually.
     statements = [s.strip() for s in sql.split(";") if s.strip()]
-    async with db_session._engine.begin() as conn:
+    async with get_engine().begin() as conn:
         for stmt in statements:
             await conn.execute(text(stmt))
     logger.info("Database migrations applied successfully")

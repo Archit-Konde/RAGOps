@@ -4,6 +4,7 @@ Async database session management.
 Provides init/close lifecycle hooks for the FastAPI lifespan and an async
 session generator for dependency injection.
 """
+
 from __future__ import annotations
 
 import ssl as _ssl
@@ -36,21 +37,27 @@ async def init_db(database_url: str) -> None:
     clean_query = urlencode(query_params, doseq=True)
 
     # Rebuild URL with asyncpg driver
-    url = urlunparse((
-        "postgresql+asyncpg",
-        parsed.netloc,
-        parsed.path,
-        parsed.params,
-        clean_query,
-        parsed.fragment,
-    ))
+    url = urlunparse(
+        (
+            "postgresql+asyncpg",
+            parsed.netloc,
+            parsed.path,
+            parsed.params,
+            clean_query,
+            parsed.fragment,
+        )
+    )
 
     connect_args: dict = {}
     if needs_ssl:
         connect_args["ssl"] = _ssl.create_default_context()
 
     _engine = create_async_engine(
-        url, echo=False, pool_size=5, max_overflow=10, connect_args=connect_args,
+        url,
+        echo=False,
+        pool_size=5,
+        max_overflow=10,
+        connect_args=connect_args,
     )
     _session_factory = async_sessionmaker(
         bind=_engine, class_=AsyncSession, expire_on_commit=False
@@ -64,6 +71,13 @@ async def close_db() -> None:
         await _engine.dispose()
     _engine = None
     _session_factory = None
+
+
+def get_engine() -> AsyncEngine:
+    """Return the current engine (raises if init_db() hasn't been called)."""
+    if _engine is None:
+        raise RuntimeError("Database not initialised — call init_db() first")
+    return _engine
 
 
 async def get_session() -> AsyncGenerator[AsyncSession, None]:
