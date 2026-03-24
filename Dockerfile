@@ -2,12 +2,16 @@ FROM python:3.11-slim
 
 WORKDIR /app
 
-# Install dependencies first for layer caching
-COPY requirements.txt .
-RUN pip install --no-cache-dir -r requirements.txt
+# Install dependencies first for layer caching (locked versions)
+COPY requirements.lock .
+RUN pip install --no-cache-dir -r requirements.lock
 
 # Copy application source
 COPY . .
+
+# Run as non-root user
+RUN adduser --disabled-password --no-create-home appuser
+USER appuser
 
 EXPOSE 7860
 
