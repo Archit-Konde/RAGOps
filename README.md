@@ -225,7 +225,7 @@ ragops-api/
 ├── packages/rag_core/
 │   ├── chunking.py           # Recursive text chunker
 │   ├── embedding.py          # SentenceTransformer wrapper
-│   ├── retrieval.py          # pgvector search + RRF fusion
+│   ├── retrieval.py          # Reciprocal Rank Fusion
 │   └── rerank.py             # Cross-encoder reranker
 ├── tests/
 │   ├── test_health.py
@@ -237,6 +237,7 @@ ragops-api/
 ├── Dockerfile
 ├── Makefile
 ├── requirements.txt
+├── requirements.lock          # Pinned deps (pip-compile)
 └── .github/workflows/ci.yml
 ```
 
