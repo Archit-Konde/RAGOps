@@ -1,6 +1,7 @@
 """
 Landing page redirect — sends visitors to Swagger UI (the demo IS the API).
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter

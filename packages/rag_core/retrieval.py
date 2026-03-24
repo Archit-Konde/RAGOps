@@ -6,15 +6,17 @@ score calibration between retrieval methods.
 
 RRF reference: Cormack, Clarke & Buettcher (2009).
 """
+
 from __future__ import annotations
 
-from typing import Any, Dict, List, Sequence
+from collections.abc import Sequence
+from typing import Any
 
 
 def reciprocal_rank_fusion(
-    ranked_lists: Sequence[List[Dict[str, Any]]],
+    ranked_lists: Sequence[list[dict[str, Any]]],
     rrf_k: int = 60,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Fuse multiple ranked lists using Reciprocal Rank Fusion.
 
@@ -30,7 +32,7 @@ def reciprocal_rank_fusion(
         List sorted by descending RRF score, each dict containing
         "id" and "rrf_score" keys.
     """
-    scores: Dict[str, float] = {}
+    scores: dict[str, float] = {}
 
     for ranked_list in ranked_lists:
         for rank_0based, item in enumerate(ranked_list):

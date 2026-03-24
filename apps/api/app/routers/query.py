@@ -3,9 +3,8 @@ RAG query router.
 
 POST /v1/query — ask a question against the ingested documents.
 """
-from __future__ import annotations
 
-from typing import List
+from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
@@ -45,7 +44,7 @@ class UsageInfo(BaseModel):
 
 class QueryResponse(BaseModel):
     answer: str
-    sources: List[SourceInfo]
+    sources: list[SourceInfo]
     model: str
     usage: UsageInfo
 

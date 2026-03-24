@@ -3,12 +3,13 @@ RAG query service.
 
 Orchestrates: embed question → pgvector search → rerank → build prompt → call LLM → return.
 """
+
 from __future__ import annotations
 
 import asyncio
 import logging
 import time
-from typing import Any, Dict, List
+from typing import Any
 
 import httpx
 import numpy as np
@@ -31,7 +32,7 @@ SYSTEM_PROMPT = (
     "You are a precise question-answering assistant. "
     "Answer questions using ONLY the provided context. "
     "If the context does not contain enough information to answer, "
-    'say "I don\'t have enough information in the provided documents '
+    "say \"I don't have enough information in the provided documents "
     'to answer this question." '
     "Do not speculate or use knowledge outside the provided context. "
     "Cite sources using [Source N] notation where N matches the context "
@@ -70,7 +71,7 @@ async def pgvector_search(
     query_embedding: np.ndarray,
     top_k: int,
     session: AsyncSession,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Run a cosine-similarity KNN search against the chunks table.
 
@@ -120,7 +121,7 @@ async def query_rag(
     reranker: CrossEncoderReranker,
     settings: Settings,
     top_k: int = 5,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     End-to-end RAG: retrieve context, rerank, generate answer.
 
@@ -184,9 +185,9 @@ async def query_rag(
 # ---------------------------------------------------------------------------
 
 
-def _build_prompt(query: str, chunks: List[dict]) -> List[dict]:
+def _build_prompt(query: str, chunks: list[dict]) -> list[dict]:
     """Build chat messages from a query and retrieved chunks."""
-    context_blocks: List[str] = []
+    context_blocks: list[str] = []
     for i, chunk in enumerate(chunks, start=1):
         doc_id = chunk.get("document_id", "unknown")
         chunk_idx = chunk.get("chunk_index", 0)
@@ -209,7 +210,7 @@ def _build_prompt(query: str, chunks: List[dict]) -> List[dict]:
 # ---------------------------------------------------------------------------
 
 
-async def _call_llm(messages: List[dict], settings: Settings) -> dict:
+async def _call_llm(messages: list[dict], settings: Settings) -> dict:
     """POST to the OpenAI-compatible /chat/completions endpoint."""
     if not settings.OPENAI_API_KEY:
         raise ValueError(
@@ -234,9 +235,13 @@ async def _call_llm(messages: List[dict], settings: Settings) -> dict:
         response.raise_for_status()
         data = response.json()
     except httpx.TimeoutException:
-        raise RuntimeError("LLM request timed out — try again or check your API endpoint.")
+        raise RuntimeError(
+            "LLM request timed out — try again or check your API endpoint."
+        )
     except httpx.HTTPStatusError as e:
-        raise RuntimeError(f"LLM API error: {e.response.status_code} — {e.response.text[:200]}")
+        raise RuntimeError(
+            f"LLM API error: {e.response.status_code} — {e.response.text[:200]}"
+        )
 
     if not data.get("choices"):
         raise RuntimeError(f"LLM returned no choices: {str(data)[:200]}")
@@ -249,7 +254,7 @@ async def _call_llm(messages: List[dict], settings: Settings) -> dict:
 # ---------------------------------------------------------------------------
 
 
-def _extract_sources(chunks: List[dict]) -> List[dict]:
+def _extract_sources(chunks: list[dict]) -> list[dict]:
     """Build a source attribution list from chunk metadata."""
     sources = []
     for i, chunk in enumerate(chunks, start=1):

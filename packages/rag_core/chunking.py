@@ -5,10 +5,10 @@ Splits raw text into overlapping chunks by trying separators in priority order,
 recursively splitting oversized pieces, and merging short pieces into full-sized
 chunks while maintaining a configurable overlap window.
 """
+
 from __future__ import annotations
 
 from collections import deque
-from typing import List
 
 
 class RecursiveTextChunker:
@@ -27,22 +27,21 @@ class RecursiveTextChunker:
         self,
         chunk_size: int = 512,
         chunk_overlap: int = 64,
-        separators: List[str] | None = None,
+        separators: list[str] | None = None,
     ) -> None:
         if chunk_overlap >= chunk_size:
             raise ValueError("chunk_overlap must be less than chunk_size")
         self.chunk_size = chunk_size
         self.chunk_overlap = chunk_overlap
-        self.separators: List[str] = (
-            separators if separators is not None
-            else ["\n\n", "\n", ". ", " ", ""]
+        self.separators: list[str] = (
+            separators if separators is not None else ["\n\n", "\n", ". ", " ", ""]
         )
 
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    def split_text(self, text: str) -> List[dict]:
+    def split_text(self, text: str) -> list[dict]:
         """
         Split *text* into chunks and return a list of chunk dicts.
 
@@ -57,7 +56,7 @@ class RecursiveTextChunker:
 
         raw_chunks = self._recursive_split(text, self.separators)
 
-        result: List[dict] = []
+        result: list[dict] = []
         cursor = 0  # forward-scan position in original text
 
         for idx, chunk in enumerate(raw_chunks):
@@ -88,7 +87,7 @@ class RecursiveTextChunker:
     # Core recursive algorithm
     # ------------------------------------------------------------------
 
-    def _recursive_split(self, text: str, separators: List[str]) -> List[str]:
+    def _recursive_split(self, text: str, separators: list[str]) -> list[str]:
         """
         Return a flat list of string pieces, each <= chunk_size characters.
         """
@@ -106,7 +105,7 @@ class RecursiveTextChunker:
 
         # Re-attach the separator to all pieces except the last so content
         # is not lost.
-        pieces: List[str] = []
+        pieces: list[str] = []
         for i, piece in enumerate(splits):
             if not piece:
                 continue
@@ -119,21 +118,17 @@ class RecursiveTextChunker:
             return []
 
         # Recursively break any oversized piece, then merge into chunks
-        good_splits: List[str] = []
-        final_chunks: List[str] = []
+        good_splits: list[str] = []
+        final_chunks: list[str] = []
 
         for piece in pieces:
             if len(piece) <= self.chunk_size:
                 good_splits.append(piece)
             else:
                 if good_splits:
-                    final_chunks.extend(
-                        self._merge_splits(good_splits, separator)
-                    )
+                    final_chunks.extend(self._merge_splits(good_splits, separator))
                     good_splits = []
-                final_chunks.extend(
-                    self._recursive_split(piece, remaining_separators)
-                )
+                final_chunks.extend(self._recursive_split(piece, remaining_separators))
 
         if good_splits:
             final_chunks.extend(self._merge_splits(good_splits, separator))
@@ -144,13 +139,13 @@ class RecursiveTextChunker:
     # Merge short splits into full-sized chunks with overlap
     # ------------------------------------------------------------------
 
-    def _merge_splits(self, splits: List[str], separator: str) -> List[str]:
+    def _merge_splits(self, splits: list[str], separator: str) -> list[str]:
         """
         Combine short pieces into chunks that respect chunk_size, with an
         overlap window of chunk_overlap characters at the start of each new
         chunk.
         """
-        chunks: List[str] = []
+        chunks: list[str] = []
         window: deque[str] = deque()
         current_len = 0
 
@@ -180,7 +175,7 @@ class RecursiveTextChunker:
     # Hard character slicing (last-resort fallback)
     # ------------------------------------------------------------------
 
-    def _hard_slice(self, text: str) -> List[str]:
+    def _hard_slice(self, text: str) -> list[str]:
         """
         Slice text into pieces of exactly chunk_size characters with
         chunk_overlap overlap. Used when no separator matches.
@@ -190,9 +185,9 @@ class RecursiveTextChunker:
         step = self.chunk_size - self.chunk_overlap
         if step <= 0:
             step = self.chunk_size
-        pieces: List[str] = []
+        pieces: list[str] = []
         start = 0
         while start < len(text):
-            pieces.append(text[start: start + self.chunk_size])
+            pieces.append(text[start : start + self.chunk_size])
             start += step
         return pieces

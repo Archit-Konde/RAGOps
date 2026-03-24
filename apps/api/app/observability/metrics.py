@@ -4,6 +4,7 @@ Structured logging helpers for observability.
 Logs key events (ingestion, queries) as structured messages. Can be extended
 with prometheus_client counters/histograms for production monitoring.
 """
+
 from __future__ import annotations
 
 import logging

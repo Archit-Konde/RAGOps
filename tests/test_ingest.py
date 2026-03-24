@@ -4,6 +4,7 @@ Tests for the /v1/ingest endpoint.
 These tests mock the database and embedding model to run without
 external dependencies (no PostgreSQL, no GPU).
 """
+
 from __future__ import annotations
 
 import uuid

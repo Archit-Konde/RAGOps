@@ -7,21 +7,20 @@ Usage:
 Runs sample queries against an inline test corpus, computes retrieval metrics
 (Precision@5, Recall@5, MRR), and prints a formatted results table.
 """
+
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-from typing import Dict, List, Union
-
 import numpy as np
 
 # Allow imports from project root
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
-from packages.rag_core.chunking import RecursiveTextChunker
-from packages.rag_core.embedding import EmbeddingModel
-from packages.rag_core.rerank import CrossEncoderReranker
+from packages.rag_core.chunking import RecursiveTextChunker  # noqa: E402
+from packages.rag_core.embedding import EmbeddingModel  # noqa: E402
+from packages.rag_core.rerank import CrossEncoderReranker  # noqa: E402
 
 
 # ---------------------------------------------------------------------------
@@ -83,10 +82,10 @@ TEST_CASES = [
 
 
 def compute_retrieval_metrics(
-    retrieved_ids: List[Union[int, str]],
-    relevant_ids: List[Union[int, str]],
+    retrieved_ids: list[int | str],
+    relevant_ids: list[int | str],
     k: int | None = None,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Compute precision, recall, F1, and MRR for a single query."""
     if k is None:
         k = len(retrieved_ids)
@@ -127,21 +126,25 @@ def compute_retrieval_metrics(
 def run_pipeline(
     query: str,
     corpus_embeddings: np.ndarray,
-    chunks: List[dict],
+    chunks: list[dict],
     embedder: EmbeddingModel,
     reranker: CrossEncoderReranker,
     top_k: int = 5,
     rerank_top_k: int = 5,
-) -> List[int]:
+) -> list[int]:
     """Embed → cosine search → rerank → return chunk indices."""
     query_vec = embedder.embed_query(query)
 
     # Dense search via NumPy (no DB needed for benchmark)
     similarities = corpus_embeddings @ query_vec
-    top_indices = np.argsort(similarities)[::-1][:top_k * 3]
+    top_indices = np.argsort(similarities)[::-1][: top_k * 3]
 
     candidates = [
-        {**chunks[i], "score": float(similarities[i]), "index": chunks[i]["chunk_index"]}
+        {
+            **chunks[i],
+            "score": float(similarities[i]),
+            "index": chunks[i]["chunk_index"],
+        }
         for i in top_indices
     ]
 
@@ -178,13 +181,20 @@ def main() -> None:
     # Run benchmark
     print(f"\nRunning {len(TEST_CASES)} queries...\n")
 
-    all_metrics: List[Dict[str, float]] = []
+    all_metrics: list[dict[str, float]] = []
     for case in TEST_CASES:
         retrieved_ids = run_pipeline(
-            case["query"], corpus_embeddings, chunks, embedder, reranker,
-            top_k=top_k, rerank_top_k=top_k,
+            case["query"],
+            corpus_embeddings,
+            chunks,
+            embedder,
+            reranker,
+            top_k=top_k,
+            rerank_top_k=top_k,
         )
-        metrics = compute_retrieval_metrics(retrieved_ids, case["relevant_ids"], k=top_k)
+        metrics = compute_retrieval_metrics(
+            retrieved_ids, case["relevant_ids"], k=top_k
+        )
         all_metrics.append(metrics)
 
         print(
@@ -202,16 +212,16 @@ def main() -> None:
     mean_mrr = sum(m["mrr"] for m in all_metrics) / n
 
     # Print formatted table
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  BENCHMARK RESULTS  (top_k={top_k}, n={n} queries)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"  {'Metric':<20s}  {'Score':>10s}")
-    print(f"  {'-'*32}")
+    print(f"  {'-' * 32}")
     print(f"  {'Precision@' + str(top_k):<20s}  {mean_p:>10.4f}")
     print(f"  {'Recall@' + str(top_k):<20s}  {mean_r:>10.4f}")
     print(f"  {'F1@' + str(top_k):<20s}  {mean_f1:>10.4f}")
     print(f"  {'MRR':<20s}  {mean_mrr:>10.4f}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 if __name__ == "__main__":

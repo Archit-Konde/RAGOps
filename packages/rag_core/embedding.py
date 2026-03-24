@@ -4,9 +4,8 @@ Sentence embedding using sentence-transformers.
 Wraps the SentenceTransformer class for batch embedding with L2 normalization.
 Output: float32 vectors of dimension 384 (for all-MiniLM-L6-v2).
 """
-from __future__ import annotations
 
-from typing import List, Optional
+from __future__ import annotations
 
 import numpy as np
 from sentence_transformers import SentenceTransformer
@@ -30,7 +29,7 @@ class EmbeddingModel:
     def __init__(
         self,
         model_name: str = DEFAULT_MODEL,
-        device: Optional[str] = None,
+        device: str | None = None,
     ) -> None:
         self.device = device or detect_device()
         self.model_name = model_name
@@ -43,7 +42,7 @@ class EmbeddingModel:
 
     def embed_texts(
         self,
-        texts: List[str],
+        texts: list[str],
         batch_size: int = 32,
         show_progress: bool = False,
     ) -> np.ndarray:

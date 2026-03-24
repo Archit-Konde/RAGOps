@@ -1,6 +1,7 @@
 """
 Shared test fixtures for RAGOps.
 """
+
 from __future__ import annotations
 
 import pytest

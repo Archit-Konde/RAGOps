@@ -5,6 +5,7 @@ Tables:
   - documents: ingested files with content-hash deduplication
   - chunks: text chunks with pgvector embeddings for similarity search
 """
+
 from __future__ import annotations
 
 import uuid

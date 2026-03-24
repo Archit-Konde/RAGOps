@@ -3,6 +3,7 @@ Document ingestion router.
 
 POST /v1/ingest — upload a file to be chunked, embedded, and stored.
 """
+
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, File, UploadFile

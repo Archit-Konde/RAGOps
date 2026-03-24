@@ -3,6 +3,7 @@ Unit tests for rag_core: chunking and embedding.
 
 These tests run without a database — they validate the core algorithms directly.
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -71,10 +72,12 @@ class TestRecursiveTextChunker:
         for chunk in chunks:
             assert chunk["start_char"] >= 0
             assert chunk["end_char"] > chunk["start_char"]
-            assert text[chunk["start_char"]:chunk["end_char"]] == chunk["text"]
+            assert text[chunk["start_char"] : chunk["end_char"]] == chunk["text"]
 
     def test_overlap_must_be_less_than_size(self):
-        with pytest.raises(ValueError, match="chunk_overlap must be less than chunk_size"):
+        with pytest.raises(
+            ValueError, match="chunk_overlap must be less than chunk_size"
+        ):
             RecursiveTextChunker(chunk_size=100, chunk_overlap=100)
 
     def test_separator_priority(self):
