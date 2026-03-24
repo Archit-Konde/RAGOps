@@ -11,11 +11,14 @@ import re
 from contextlib import asynccontextmanager
 from pathlib import Path
 
-from fastapi import FastAPI
+from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
+from slowapi.errors import RateLimitExceeded
 from sqlalchemy import text
 
 from apps.api.app import VERSION
 from apps.api.app.db.session import close_db, get_engine, init_db
+from apps.api.app.deps import limiter
 from apps.api.app.routers import health, ingest, landing, query
 from apps.api.app.services.rag_service import close_http_client
 from apps.api.app.settings import get_settings
@@ -65,6 +68,13 @@ async def lifespan(app: FastAPI):
     await close_db()
 
 
+def _rate_limit_handler(request: Request, exc: RateLimitExceeded) -> JSONResponse:
+    return JSONResponse(
+        status_code=429,
+        content={"detail": f"Rate limit exceeded: {exc.detail}"},
+    )
+
+
 def create_app() -> FastAPI:
     """Build and configure the FastAPI application."""
     app = FastAPI(
@@ -73,6 +83,9 @@ def create_app() -> FastAPI:
         version=VERSION,
         lifespan=lifespan,
     )
+
+    app.state.limiter = limiter
+    app.add_exception_handler(RateLimitExceeded, _rate_limit_handler)
 
     app.include_router(landing.router)
     app.include_router(health.router)

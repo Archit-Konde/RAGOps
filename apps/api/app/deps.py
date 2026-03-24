@@ -10,11 +10,16 @@ from __future__ import annotations
 from typing import Annotated
 
 from fastapi import Depends
+from slowapi import Limiter
+from slowapi.util import get_remote_address
 
 from apps.api.app.db.session import get_session as get_db  # noqa: F401 (re-exported)
 from apps.api.app.settings import Settings, get_settings
 from packages.rag_core.embedding import EmbeddingModel
 from packages.rag_core.rerank import CrossEncoderReranker
+
+# Rate limiter singleton (shared across routers)
+limiter = Limiter(key_func=get_remote_address)
 
 # Module-level singletons (initialised on first call)
 _embedder: EmbeddingModel | None = None

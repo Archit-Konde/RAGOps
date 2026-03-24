@@ -6,11 +6,11 @@ POST /v1/query — ask a question against the ingested documents.
 
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from fastapi import APIRouter, Depends, Request
+from pydantic import BaseModel, Field
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from apps.api.app.deps import get_db, get_embedder, get_reranker, get_settings
+from apps.api.app.deps import get_db, get_embedder, get_reranker, get_settings, limiter
 from apps.api.app.services import rag_service
 from apps.api.app.settings import Settings
 from packages.rag_core.embedding import EmbeddingModel
@@ -26,7 +26,7 @@ router = APIRouter(prefix="/v1", tags=["query"])
 
 class QueryRequest(BaseModel):
     query: str
-    top_k: int = 5
+    top_k: int = Field(default=5, ge=1, le=20)
 
 
 class SourceInfo(BaseModel):
@@ -55,7 +55,9 @@ class QueryResponse(BaseModel):
 
 
 @router.post("/query", response_model=QueryResponse)
+@limiter.limit("10/minute")
 async def query_documents(
+    request: Request,
     body: QueryRequest,
     db: AsyncSession = Depends(get_db),
     embedder: EmbeddingModel = Depends(get_embedder),

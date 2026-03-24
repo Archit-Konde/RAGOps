@@ -13,6 +13,7 @@ from typing import Any
 
 from fastapi import HTTPException, UploadFile
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from apps.api.app.db.models import Chunk, Document
@@ -74,7 +75,20 @@ async def ingest_file(
     # 6. Store document + chunks
     doc = Document(filename=filename, content_hash=content_hash)
     db.add(doc)
-    await db.flush()  # get doc.id
+    try:
+        await db.flush()  # get doc.id
+    except IntegrityError:
+        # Concurrent upload of the same file — unique constraint on content_hash
+        await db.rollback()
+        existing = await db.execute(
+            select(Document).where(Document.content_hash == content_hash)
+        )
+        existing_doc = existing.scalar_one_or_none()
+        return {
+            "document_id": str(existing_doc.id) if existing_doc else "unknown",
+            "num_chunks": 0,
+            "status": "duplicate",
+        }
 
     chunk_rows = [
         Chunk(
@@ -111,10 +125,10 @@ def _extract_text(file_bytes: bytes, filename: str) -> str:
 
 
 def _extract_pdf_text(file_bytes: bytes) -> str:
-    """Extract text from a PDF using PyPDF2."""
+    """Extract text from a PDF using pypdf."""
     import io
 
-    from PyPDF2 import PdfReader
+    from pypdf import PdfReader
 
     reader = PdfReader(io.BytesIO(file_bytes))
     pages = []
